@@ -1,41 +1,6 @@
 # Saros Yield Tracker
 
-A Next.js 15 application that compares yields across Solana DeFi protocols with a focus on highlighting when Saros offers better opportunities than competitors like Jupiter, Raydium, Meteora, and Kamino.
-
-## 🚀 Features
-
-### Web Dashboard
-- **Real-time Yield Comparison**: Side-by-side comparison of APYs across major protocols
-- **Opportunity Cards**: Highlighted cards showing when Saros beats competition
-- **Mobile Responsive**: Optimized for all device sizes
-- **Live Data**: Updates every 15 minutes
-- **Clean UI**: Built with Tailwind CSS v4 and ShadCN/UI components
-
-### Telegram Bot Integration
-- **Real-time Alerts**: Get notified when yields reach your target
-- **Custom Notifications**: Set alerts for specific tokens and APY thresholds
-- **Saros Advantage Alerts**: Instant notifications when Saros beats competitors
-- **Interactive Commands**: Easy-to-use bot commands for yield checking
-
-### Supported Protocols
-- 🟢 **Saros** - Primary focus with advantage highlighting
-- 🟡 **Jupiter** - Yield farming and aggregation
-- 🟣 **Raydium** - AMM and farming pools
-- 🔵 **Meteora** - DLMM and vault yields
-- 🔴 **Kamino** - Lending and multiply strategies
-
-### Supported Tokens
-- SOL, USDC, USDT, JitoSOL, mSOL
-
-## 🛠️ Technology Stack
-
-- **Framework**: Next.js 15 with App Router
-- **Runtime**: Bun (fastest JavaScript runtime)
-- **Styling**: Tailwind CSS v4 (zero-config)
-- **UI Components**: ShadCN/UI with Radix primitives
-- **TypeScript**: Full type safety
-- **Telegram Bot**: Telegraf.js
-- **Deployment**: Vercel-ready
+Compares yields across Solana DeFi protocols with a focus on highlighting when Saros offers better opportunities than competitors like Jupiter, Raydium, Meteora, and Kamino.
 
 ## 📦 Installation
 
@@ -145,25 +110,6 @@ A Next.js 15 application that compares yields across Solana DeFi protocols with 
 - Component styling: Individual component files
 - Tailwind config: Uses Tailwind v4 (no config file needed)
 
-## 📈 Performance Features
-
-### Caching Strategy
-- **In-memory caching**: 15-minute cache for API responses
-- **API rate limiting**: Prevents excessive API calls
-- **Efficient re-fetching**: Smart cache invalidation
-
-### Mobile Optimization
-- **Responsive design**: Mobile-first approach
-- **Touch-friendly**: Large tap targets and smooth interactions
-- **Fast loading**: Optimized bundle size and lazy loading
-
-## 🛡️ Security
-
-- **Environment variables**: Sensitive data properly configured
-- **API validation**: Input validation on all endpoints
-- **Rate limiting**: Protection against abuse
-- **Type safety**: Full TypeScript coverage
-
 ## 🤝 Contributing
 
 1. **Fork the repository**
@@ -172,9 +118,6 @@ A Next.js 15 application that compares yields across Solana DeFi protocols with 
 4. **Push to the branch**: `git push origin feature/amazing-feature`
 5. **Open a Pull Request**
 
-## 📄 License
-
-MIT License - see LICENSE file for details
 
 ## 🔗 Links
 
