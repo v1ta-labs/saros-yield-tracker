@@ -1,6 +1,5 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { LiquidityBookServices, MODE } from '@saros-finance/dlmm-sdk';
-import { getListFarmSaros, getListStakeSaros, getSwapAmountSaros } from '@saros-finance/sdk';
 
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
@@ -169,33 +168,9 @@ export class SarosService {
 
   async getFarmPools(): Promise<SarosFarmPool[]> {
     try {
-      const farms = await getListFarmSaros();
-      const enrichedFarms: SarosFarmPool[] = [];
-
-      for (const farm of farms) {
-        try {
-          // Extract farm data
-          const tvl = parseFloat(farm.tvl || '0');
-          const apr = parseFloat(farm.apr || '0');
-          const apy = this.aprToApy(apr);
-
-          enrichedFarms.push({
-            address: farm.farmId || farm.address,
-            lpToken: farm.lpMint || '',
-            rewardToken: farm.rewardMint || '',
-            lpTokenSymbol: await this.getTokenSymbol(farm.lpMint || ''),
-            rewardTokenSymbol: await this.getTokenSymbol(farm.rewardMint || ''),
-            tvl,
-            apr,
-            apy,
-          });
-        } catch (error) {
-          console.error('Error processing farm:', error);
-          continue;
-        }
-      }
-
-      return enrichedFarms;
+      // Farm pools not implemented yet - SDK export not available
+      // TODO: Implement when SDK methods are available
+      return [];
     } catch (error) {
       console.error('Error fetching farm pools:', error);
       return [];
@@ -204,8 +179,9 @@ export class SarosService {
 
   async getStakePools(): Promise<any[]> {
     try {
-      const stakes = await getListStakeSaros();
-      return stakes || [];
+      // Stake pools not implemented yet - SDK export not available
+      // TODO: Implement when SDK methods are available
+      return [];
     } catch (error) {
       console.error('Error fetching stake pools:', error);
       return [];

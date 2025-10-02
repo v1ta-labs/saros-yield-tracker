@@ -39,6 +39,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",
     "eslint": "^8",
-    "eslint-config-next": "^15.5.4"
+    "eslint-config-next": "^15.5.4",
+    "pino-pretty": "^13.1.1"
   }
 }
