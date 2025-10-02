@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { YieldFetcher } from '@/lib/yield-fetcher';
+import { YieldService } from '@/lib/yield.service';
 
-const yieldFetcher = new YieldFetcher();
+const yieldService = new YieldService();
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const minAdvantage = parseFloat(searchParams.get('min_advantage') || '0');
 
-    let opportunities = await yieldFetcher.getBestOpportunities();
+    let opportunities = await yieldService.getBestOpportunities();
     
     if (minAdvantage > 0) {
       opportunities = opportunities.filter(op => op.advantage >= minAdvantage);

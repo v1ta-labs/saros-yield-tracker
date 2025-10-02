@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { YieldFetcher } from '@/lib/yield-fetcher';
+import { YieldService } from '@/lib/yield.service';
 
-const yieldFetcher = new YieldFetcher();
+const yieldService = new YieldService();
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
     let yields;
     
     if (token) {
-      yields = await yieldFetcher.getYieldsByToken(token);
+      yields = await yieldService.getYieldsByToken(token);
     } else if (protocol) {
-      yields = await yieldFetcher.getYieldsByProtocol(protocol);
+      yields = await yieldService.getYieldsByProtocol(protocol);
     } else {
-      yields = await yieldFetcher.getAllYields();
+      yields = await yieldService.getAllYields();
     }
 
     return NextResponse.json({
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    yieldFetcher.clearCache();
-    const yields = await yieldFetcher.getAllYields();
+    yieldService.clearCache();
+    const yields = await yieldService.getAllYields();
     
     return NextResponse.json({
       success: true,

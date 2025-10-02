@@ -1,6 +1,7 @@
 import { YieldData, Opportunity, SUPPORTED_TOKENS, PROTOCOLS } from '../types';
+import { sarosService } from './saros.service';
 
-export class YieldFetcher {
+export class YieldService {
   private cache: Map<string, { data: any; expiry: number }> = new Map();
   private readonly CACHE_DURATION = 15 * 60 * 1000;
 
@@ -25,56 +26,38 @@ export class YieldFetcher {
     const cached = this.getCached('saros-yields');
     if (cached) return cached;
 
-    const yields: YieldData[] = [
-      {
-        protocol: 'Saros',
-        token: 'SOL',
-        apy: 12.5,
-        tvl: 2500000,
-        poolAddress: 'saros_sol_pool_123',
-        lastUpdated: new Date(),
-        category: 'farming'
-      },
-      {
-        protocol: 'Saros',
-        token: 'USDC',
-        apy: 8.2,
-        tvl: 5200000,
-        poolAddress: 'saros_usdc_pool_456',
-        lastUpdated: new Date(),
-        category: 'lending'
-      },
-      {
-        protocol: 'Saros',
-        token: 'USDT',
-        apy: 8.0,
-        tvl: 3100000,
-        poolAddress: 'saros_usdt_pool_789',
-        lastUpdated: new Date(),
-        category: 'lending'
-      },
-      {
-        protocol: 'Saros',
-        token: 'JitoSOL',
-        apy: 9.8,
-        tvl: 1800000,
-        poolAddress: 'saros_jitosol_pool_101',
-        lastUpdated: new Date(),
-        category: 'staking'
-      },
-      {
-        protocol: 'Saros',
-        token: 'mSOL',
-        apy: 9.5,
-        tvl: 1200000,
-        poolAddress: 'saros_msol_pool_202',
-        lastUpdated: new Date(),
-        category: 'staking'
-      }
-    ];
+    try {
+      const pools = await sarosService.getTopDLMMPoolsByTVL(20);
 
-    this.setCache('saros-yields', yields);
-    return yields;
+      const yields: YieldData[] = pools.map(pool => {
+        const primaryToken = this.getPrimaryToken(pool.tokenXSymbol, pool.tokenYSymbol);
+
+        return {
+          protocol: 'Saros',
+          token: primaryToken,
+          apy: pool.apy,
+          tvl: pool.tvl,
+          poolAddress: pool.address,
+          lastUpdated: new Date(),
+          category: 'farming' as const
+        };
+      }).filter(y => SUPPORTED_TOKENS.includes(y.token as any));
+
+      this.setCache('saros-yields', yields);
+      return yields;
+    } catch (error) {
+      console.error('Error fetching Saros yields:', error);
+      return [];
+    }
+  }
+
+  private getPrimaryToken(tokenX: string, tokenY: string): string {
+    const supportedTokens = ['SOL', 'USDC', 'USDT', 'JitoSOL', 'mSOL'];
+
+    if (supportedTokens.includes(tokenX)) return tokenX;
+    if (supportedTokens.includes(tokenY)) return tokenY;
+
+    return tokenX;
   }
 
   private async fetchJupiterYields(): Promise<YieldData[]> {
