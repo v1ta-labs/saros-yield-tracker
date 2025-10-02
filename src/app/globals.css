@@ -1,93 +1,71 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 222 47% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142 71% 45%;
-    --primary-foreground: 222 47% 4%;
-    --secondary: 217 33% 12%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 142 71% 45%;
-    --radius: 0.75rem;
-    --chart-1: 142 71% 45%;
-    --chart-2: 221 83% 53%;
-    --chart-3: 280 87% 65%;
-    --chart-4: 38 92% 50%;
-    --chart-5: 340 82% 52%;
+@theme {
+  --color-background: oklch(0.15 0.02 250);
+  --color-foreground: oklch(0.98 0.01 250);
+  --color-card: oklch(0.18 0.02 250);
+  --color-card-foreground: oklch(0.98 0.01 250);
+  --color-popover: oklch(0.18 0.02 250);
+  --color-popover-foreground: oklch(0.98 0.01 250);
+  --color-primary: oklch(0.65 0.19 160);
+  --color-primary-foreground: oklch(0.15 0.02 250);
+  --color-secondary: oklch(0.23 0.03 250);
+  --color-secondary-foreground: oklch(0.98 0.01 250);
+  --color-muted: oklch(0.23 0.03 250);
+  --color-muted-foreground: oklch(0.62 0.02 250);
+  --color-accent: oklch(0.28 0.03 250);
+  --color-accent-foreground: oklch(0.98 0.01 250);
+  --color-destructive: oklch(0.58 0.22 25);
+  --color-destructive-foreground: oklch(0.98 0.01 250);
+  --color-border: oklch(0.28 0.03 250);
+  --color-input: oklch(0.28 0.03 250);
+  --color-ring: oklch(0.65 0.19 160);
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
+}
+
+@utility glow-primary {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+@utility glow-secondary {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+@utility glow-accent {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+@utility animate-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.3);
   }
 }
 
-@layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
+@utility gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to right, var(--color-primary), rgb(59, 130, 246), rgb(147, 51, 234));
 }
 
-@layer utilities {
-  .glow-primary {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-  }
+@utility glass-effect {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-  .glow-secondary {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-
-  .glow-accent {
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-  }
-
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
-  }
-
-  @keyframes glow {
-    from {
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-    }
-    to {
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.3);
-    }
-  }
-
-  .gradient-text {
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    background-image: linear-gradient(to right, hsl(var(--primary)), rgb(59, 130, 246), rgb(147, 51, 234));
-  }
-
-  .glass-effect {
-    background-color: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .grid-pattern {
-    background-image:
-      linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-    background-size: 50px 50px;
-  }
+@utility grid-pattern {
+  background-image:
+    linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
