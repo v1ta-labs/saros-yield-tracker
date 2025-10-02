@@ -1,5 +1,5 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import DLMM from '@saros-finance/dlmm-sdk';
+import { LiquidityBookServices, MODE } from '@saros-finance/dlmm-sdk';
 
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
@@ -40,56 +40,62 @@ export interface SarosFarmPool {
 
 export class SarosService {
   private connection: Connection;
-  private dlmmInstance: DLMM | null = null;
+  private lbServices: LiquidityBookServices;
 
   constructor() {
     this.connection = new Connection(RPC_ENDPOINT, 'confirmed');
-  }
-
-  private async initializeDLMM(): Promise<DLMM> {
-    if (!this.dlmmInstance) {
-      this.dlmmInstance = await DLMM.create(this.connection);
-    }
-    return this.dlmmInstance;
+    this.lbServices = new LiquidityBookServices({
+      mode: MODE.MAINNET,
+      options: {
+        rpcUrl: RPC_ENDPOINT,
+        commitmentOrConfig: 'confirmed'
+      }
+    });
   }
 
   async getDLMMPools(): Promise<SarosDLMMPool[]> {
     try {
-      const dlmm = await this.initializeDLMM();
-      const pools = await dlmm.getAllLbPairs();
-
+      const poolAddresses = await this.lbServices.fetchPoolAddresses();
       const enrichedPools: SarosDLMMPool[] = [];
 
-      for (const pool of pools) {
+      for (const address of poolAddresses.slice(0, 20)) {
         try {
-          const poolData = await dlmm.getActiveBin(new PublicKey(pool.address));
-          const fees = await dlmm.getFeeRate(new PublicKey(pool.address));
+          const metadata = await this.lbServices.fetchPoolMetadata(address);
+          const pairAccount = await this.lbServices.getPairAccount(new PublicKey(address));
 
-          const tvl = this.calculateTVL(poolData);
-          const volume24h = this.estimateVolume24h(poolData);
-          const fees24h = volume24h * (fees / 10000);
+          const reserveX = parseFloat(metadata.baseReserve) / Math.pow(10, metadata.extra.tokenBaseDecimal);
+          const reserveY = parseFloat(metadata.quoteReserve) / Math.pow(10, metadata.extra.tokenQuoteDecimal);
+
+          const tokenXSymbol = await this.getTokenSymbol(metadata.baseMint);
+          const tokenYSymbol = await this.getTokenSymbol(metadata.quoteMint);
+
+          const tvl = reserveX + reserveY;
+          const volume24h = tvl * 0.1;
+          const fees24h = volume24h * (metadata.tradeFee / 10000);
           const apr = this.calculateAPR(fees24h, tvl);
           const apy = this.aprToApy(apr);
 
-          enrichedPools.push({
-            address: pool.address,
-            tokenX: pool.tokenX.toString(),
-            tokenY: pool.tokenY.toString(),
-            tokenXSymbol: await this.getTokenSymbol(pool.tokenX.toString()),
-            tokenYSymbol: await this.getTokenSymbol(pool.tokenY.toString()),
-            tvl,
-            volume24h,
-            fees24h,
-            apr,
-            apy
-          });
+          if (tvl > 1000) {
+            enrichedPools.push({
+              address,
+              tokenX: metadata.baseMint,
+              tokenY: metadata.quoteMint,
+              tokenXSymbol,
+              tokenYSymbol,
+              tvl,
+              volume24h,
+              fees24h,
+              apr,
+              apy
+            });
+          }
         } catch (error) {
-          console.error(`Error processing pool ${pool.address}:`, error);
+          console.error(`Error processing pool ${address}:`, error);
           continue;
         }
       }
 
-      return enrichedPools.filter(pool => pool.tvl > 1000);
+      return enrichedPools;
     } catch (error) {
       console.error('Error fetching DLMM pools:', error);
       return [];
@@ -121,32 +127,6 @@ export class SarosService {
     } catch (error) {
       console.error('Error finding pool by tokens:', error);
       return null;
-    }
-  }
-
-  private calculateTVL(poolData: any): number {
-    try {
-      if (!poolData || !poolData.reserveX || !poolData.reserveY) {
-        return 0;
-      }
-
-      const reserveXValue = Number(poolData.reserveX) * (poolData.priceX || 1);
-      const reserveYValue = Number(poolData.reserveY) * (poolData.priceY || 1);
-
-      return reserveXValue + reserveYValue;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  private estimateVolume24h(poolData: any): number {
-    try {
-      if (!poolData || !poolData.volume) {
-        return 0;
-      }
-      return Number(poolData.volume || 0);
-    } catch (error) {
-      return 0;
     }
   }
 
