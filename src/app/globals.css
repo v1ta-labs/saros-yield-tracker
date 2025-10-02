@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: oklch(0.15 0.02 250);
-  --color-foreground: oklch(0.98 0.01 250);
-  --color-card: oklch(0.18 0.02 250);
-  --color-card-foreground: oklch(0.98 0.01 250);
-  --color-popover: oklch(0.18 0.02 250);
-  --color-popover-foreground: oklch(0.98 0.01 250);
-  --color-primary: oklch(0.65 0.19 160);
-  --color-primary-foreground: oklch(0.15 0.02 250);
-  --color-secondary: oklch(0.23 0.03 250);
-  --color-secondary-foreground: oklch(0.98 0.01 250);
-  --color-muted: oklch(0.23 0.03 250);
-  --color-muted-foreground: oklch(0.62 0.02 250);
-  --color-accent: oklch(0.28 0.03 250);
-  --color-accent-foreground: oklch(0.98 0.01 250);
-  --color-destructive: oklch(0.58 0.22 25);
+  --color-background: oklch(0.12 0.02 250);
+  --color-foreground: oklch(0.95 0.01 250);
+  --color-card: oklch(0.16 0.02 250);
+  --color-card-foreground: oklch(0.95 0.01 250);
+  --color-popover: oklch(0.16 0.02 250);
+  --color-popover-foreground: oklch(0.95 0.01 250);
+  --color-primary: oklch(0.55 0.18 160);
+  --color-primary-foreground: oklch(0.98 0.01 250);
+  --color-secondary: oklch(0.20 0.03 250);
+  --color-secondary-foreground: oklch(0.95 0.01 250);
+  --color-muted: oklch(0.20 0.03 250);
+  --color-muted-foreground: oklch(0.65 0.02 250);
+  --color-accent: oklch(0.25 0.03 250);
+  --color-accent-foreground: oklch(0.95 0.01 250);
+  --color-destructive: oklch(0.55 0.22 25);
   --color-destructive-foreground: oklch(0.98 0.01 250);
-  --color-border: oklch(0.28 0.03 250);
-  --color-input: oklch(0.28 0.03 250);
-  --color-ring: oklch(0.65 0.19 160);
+  --color-border: oklch(0.25 0.03 250);
+  --color-input: oklch(0.25 0.03 250);
+  --color-ring: oklch(0.55 0.18 160);
   --radius-lg: 0.75rem;
   --radius-md: calc(0.75rem - 2px);
   --radius-sm: calc(0.75rem - 4px);
@@ -68,4 +68,49 @@
     linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
   background-size: 50px 50px;
+}
+
+/* Wallet Adapter Styles */
+.wallet-adapter-button {
+  background-color: oklch(0.45 0.16 160) !important;
+  color: oklch(0.98 0.01 250) !important;
+  border-radius: 0.5rem !important;
+  font-weight: 500 !important;
+}
+
+.wallet-adapter-button:hover {
+  background-color: oklch(0.50 0.17 160) !important;
+  opacity: 1 !important;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: oklch(0.50 0.17 160) !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.wallet-adapter-modal {
+  background-color: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 0.75rem !important;
+}
+
+.wallet-adapter-modal-title {
+  color: var(--color-foreground) !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+}
+
+.wallet-adapter-modal-list li {
+  background-color: var(--color-muted) !important;
+  border-radius: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.wallet-adapter-modal-list li:hover {
+  background-color: var(--color-accent) !important;
 }

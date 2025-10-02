@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { WalletContextProvider } from '@/components/WalletProvider'
 
 export const metadata: Metadata = {
   title: 'Saros Yield Tracker',
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-background font-sans antialiased">
-        {children}
+        <WalletContextProvider>
+          {children}
+        </WalletContextProvider>
       </body>
     </html>
   )

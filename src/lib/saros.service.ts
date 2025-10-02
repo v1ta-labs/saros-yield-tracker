@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { LiquidityBookServices, MODE } from '@saros-finance/dlmm-sdk';
+import { getListFarmSaros, getListStakeSaros, getSwapAmountSaros } from '@saros-finance/sdk';
 
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
@@ -152,6 +153,79 @@ export class SarosService {
     };
 
     return knownTokens[mintAddress] || mintAddress.slice(0, 4);
+  }
+
+  async getAMMPools(): Promise<SarosAMMPool[]> {
+    try {
+      // Note: @saros-finance/sdk doesn't have direct pool listing
+      // This is a placeholder - actual implementation would require
+      // fetching pool data from Saros API or on-chain accounts
+      return [];
+    } catch (error) {
+      console.error('Error fetching AMM pools:', error);
+      return [];
+    }
+  }
+
+  async getFarmPools(): Promise<SarosFarmPool[]> {
+    try {
+      const farms = await getListFarmSaros();
+      const enrichedFarms: SarosFarmPool[] = [];
+
+      for (const farm of farms) {
+        try {
+          // Extract farm data
+          const tvl = parseFloat(farm.tvl || '0');
+          const apr = parseFloat(farm.apr || '0');
+          const apy = this.aprToApy(apr);
+
+          enrichedFarms.push({
+            address: farm.farmId || farm.address,
+            lpToken: farm.lpMint || '',
+            rewardToken: farm.rewardMint || '',
+            lpTokenSymbol: await this.getTokenSymbol(farm.lpMint || ''),
+            rewardTokenSymbol: await this.getTokenSymbol(farm.rewardMint || ''),
+            tvl,
+            apr,
+            apy,
+          });
+        } catch (error) {
+          console.error('Error processing farm:', error);
+          continue;
+        }
+      }
+
+      return enrichedFarms;
+    } catch (error) {
+      console.error('Error fetching farm pools:', error);
+      return [];
+    }
+  }
+
+  async getStakePools(): Promise<any[]> {
+    try {
+      const stakes = await getListStakeSaros();
+      return stakes || [];
+    } catch (error) {
+      console.error('Error fetching stake pools:', error);
+      return [];
+    }
+  }
+
+  async getAllPools(): Promise<{
+    dlmm: SarosDLMMPool[];
+    amm: SarosAMMPool[];
+    farms: SarosFarmPool[];
+    stakes: any[];
+  }> {
+    const [dlmm, amm, farms, stakes] = await Promise.all([
+      this.getDLMMPools(),
+      this.getAMMPools(),
+      this.getFarmPools(),
+      this.getStakePools(),
+    ]);
+
+    return { dlmm, amm, farms, stakes };
   }
 
   async getHealthStatus(): Promise<{

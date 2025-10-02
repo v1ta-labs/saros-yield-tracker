@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { OpportunityCard } from '@/components/opportunity-card';
 import { YieldComparisonTable } from '@/components/yield-comparison-table';
+import { WalletButton } from '@/components/WalletButton';
+import { UserDashboard } from '@/components/UserDashboard';
 import {
   TrendingUp,
   DollarSign,
@@ -14,15 +17,22 @@ import {
   RefreshCw,
   BarChart3,
   Target,
-  Zap
+  Zap,
+  User
 } from 'lucide-react';
 import { Opportunity, YieldData } from '@/types';
+import { UserPortfolio, OptimizationRecommendation } from '@/lib/user-positions.service';
 
 export default function Home() {
+  const { connected, publicKey } = useWallet();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [yields, setYields] = useState<YieldData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showUserDashboard, setShowUserDashboard] = useState(false);
+  const [userPortfolio, setUserPortfolio] = useState<UserPortfolio | null>(null);
+  const [recommendations, setRecommendations] = useState<OptimizationRecommendation[]>([]);
+  const [marketComparison, setMarketComparison] = useState<any>(null);
   const [stats, setStats] = useState({
     totalOpportunities: 0,
     sarosAdvantages: 0,
@@ -35,6 +45,16 @@ export default function Home() {
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      fetchUserData();
+    } else {
+      setUserPortfolio(null);
+      setRecommendations([]);
+      setMarketComparison(null);
+    }
+  }, [connected, publicKey]);
 
   const fetchData = async () => {
     if (!loading) setRefreshing(true);
@@ -61,6 +81,23 @@ export default function Home() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    if (!publicKey) return;
+
+    try {
+      const res = await fetch(`/api/user/portfolio?wallet=${publicKey.toBase58()}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setUserPortfolio(data.data.portfolio);
+        setRecommendations(data.data.recommendations);
+        setMarketComparison(data.data.marketComparison);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
   };
 
@@ -96,22 +133,44 @@ export default function Home() {
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   <span className="text-xs">Live</span>
                 </Badge>
+                {connected && (
+                  <Button
+                    onClick={() => setShowUserDashboard(!showUserDashboard)}
+                    size="sm"
+                    variant={showUserDashboard ? "default" : "outline"}
+                    className="gap-2 text-foreground hover:text-foreground"
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {showUserDashboard ? 'Market View' : 'My Portfolio'}
+                    </span>
+                  </Button>
+                )}
                 <Button
                   onClick={fetchData}
                   disabled={refreshing}
                   size="sm"
                   variant="outline"
-                  className="gap-2"
+                  className="gap-2 text-foreground hover:text-foreground"
                 >
                   <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                   <span className="hidden sm:inline">Refresh</span>
                 </Button>
+                <WalletButton />
               </div>
             </div>
           </div>
         </header>
 
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {showUserDashboard && connected ? (
+            <UserDashboard
+              portfolio={userPortfolio}
+              recommendations={recommendations}
+              marketComparison={marketComparison}
+            />
+          ) : (
+            <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -253,6 +312,8 @@ export default function Home() {
           <div>
             <YieldComparisonTable initialData={yields} loading={loading} />
           </div>
+            </>
+          )}
         </main>
 
         <footer className="border-t border-border mt-16">
