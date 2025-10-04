@@ -5,11 +5,13 @@ const yieldService = new YieldService();
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('[API /opportunities] Fetching opportunities...');
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10');
     const minAdvantage = parseFloat(searchParams.get('min_advantage') || '0');
 
     let opportunities = await yieldService.getBestOpportunities();
+    console.log(`[API /opportunities] Retrieved ${opportunities.length} opportunities`);
     
     if (minAdvantage > 0) {
       opportunities = opportunities.filter(op => op.advantage >= minAdvantage);
@@ -24,6 +26,7 @@ export async function GET(request: NextRequest) {
       ? sarosAdvantages.reduce((sum, op) => sum + op.advantage, 0) / sarosAdvantages.length 
       : 0;
 
+    console.log(`[API /opportunities] Sending ${opportunities.length} opportunities to client`);
     return NextResponse.json({
       success: true,
       data: {
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error fetching opportunities:', error);
+    console.error('[API /opportunities] Error fetching opportunities:', error);
     return NextResponse.json(
       { 
         success: false, 

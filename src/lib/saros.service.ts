@@ -55,9 +55,12 @@ export class SarosService {
 
   async getDLMMPools(): Promise<SarosDLMMPool[]> {
     try {
+      console.log('[SarosService] Fetching DLMM pool addresses...');
       const poolAddresses = await this.lbServices.fetchPoolAddresses();
+      console.log(`[SarosService] Found ${poolAddresses.length} pool addresses, processing top 5`);
       const enrichedPools: SarosDLMMPool[] = [];
 
+      // Process top 20 pools to find supported tokens
       for (const address of poolAddresses.slice(0, 20)) {
         try {
           const metadata = await this.lbServices.fetchPoolMetadata(address);
@@ -90,14 +93,15 @@ export class SarosService {
             });
           }
         } catch (error) {
-          console.error(`Error processing pool ${address}:`, error);
+          console.error(`[SarosService] Error processing pool ${address}:`, error);
           continue;
         }
       }
 
+      console.log(`[SarosService] Successfully processed ${enrichedPools.length} DLMM pools`);
       return enrichedPools;
     } catch (error) {
-      console.error('Error fetching DLMM pools:', error);
+      console.error('[SarosService] Error fetching DLMM pools:', error);
       return [];
     }
   }

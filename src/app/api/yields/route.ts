@@ -9,8 +9,9 @@ export async function GET(request: NextRequest) {
     const token = searchParams.get('token');
     const protocol = searchParams.get('protocol');
 
+    console.log(`[API /yields] Fetching yields - token: ${token}, protocol: ${protocol}`);
     let yields;
-    
+
     if (token) {
       yields = await yieldService.getYieldsByToken(token);
     } else if (protocol) {
@@ -19,13 +20,14 @@ export async function GET(request: NextRequest) {
       yields = await yieldService.getAllYields();
     }
 
+    console.log(`[API /yields] Retrieved ${yields.length} yields`);
     return NextResponse.json({
       success: true,
       data: yields,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error fetching yields:', error);
+    console.error('[API /yields] Error fetching yields:', error);
     return NextResponse.json(
       { 
         success: false, 

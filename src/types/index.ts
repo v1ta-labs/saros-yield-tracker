@@ -53,9 +53,11 @@ export const SUPPORTED_TOKENS = ['SOL', 'USDC', 'USDT', 'JitoSOL', 'mSOL'] as co
 export type SupportedToken = typeof SUPPORTED_TOKENS[number];
 
 export const PROTOCOLS = {
-  SAROS: { name: 'Saros', color: '#10B981', website: 'https://saros.finance' },
-  JUPITER: { name: 'Jupiter', color: '#FCD34D', website: 'https://jup.ag' },
-  RAYDIUM: { name: 'Raydium', color: '#7C3AED', website: 'https://raydium.io' },
-  METEORA: { name: 'Meteora', color: '#3B82F6', website: 'https://meteora.ag' },
-  KAMINO: { name: 'Kamino', color: '#EF4444', website: 'https://kamino.finance' },
+  SAROS: { name: 'Saros', color: '#10B981', website: 'https://saros.finance', description: 'DLMM DEX' },
+  METEORA: { name: 'Meteora', color: '#3B82F6', website: 'https://meteora.ag', description: 'DLMM' },
+  RAYDIUM: { name: 'Raydium', color: '#7C3AED', website: 'https://raydium.io', description: 'AMM' },
+  KAMINO: { name: 'Kamino', color: '#EF4444', website: 'https://kamino.finance', description: 'Lending' },
+  ORCA: { name: 'Orca', color: '#FF6B9D', website: 'https://orca.so', description: 'Whirlpools' },
+  MARINADE: { name: 'Marinade', color: '#00D4AA', website: 'https://marinade.finance', description: 'Staking' },
+  SOLEND: { name: 'Solend', color: '#6C63FF', website: 'https://solend.fi', description: 'Lending' },
 } as const;

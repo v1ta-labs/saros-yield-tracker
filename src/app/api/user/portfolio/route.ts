@@ -8,14 +8,17 @@ export async function GET(request: NextRequest) {
     const walletAddress = searchParams.get('wallet');
 
     if (!walletAddress) {
+      console.warn('[API /user/portfolio] Missing wallet address');
       return NextResponse.json(
         { success: false, error: 'Wallet address required' },
         { status: 400 }
       );
     }
 
+    console.log(`[API /user/portfolio] Fetching portfolio for wallet: ${walletAddress.slice(0, 8)}...`);
     // Fetch user portfolio
     const portfolio = await userPositionsService.getUserPortfolio(walletAddress);
+    console.log(`[API /user/portfolio] Found ${portfolio.positionCount} positions`);
 
     // Fetch market data for comparison
     const dlmmPools = await sarosService.getDLMMPools();
@@ -37,6 +40,7 @@ export async function GET(request: NextRequest) {
       marketData
     );
 
+    console.log(`[API /user/portfolio] Sending portfolio data with ${recommendations.length} recommendations`);
     return NextResponse.json({
       success: true,
       data: {
@@ -46,7 +50,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching user portfolio:', error);
+    console.error('[API /user/portfolio] Error fetching user portfolio:', error);
     return NextResponse.json(
       {
         success: false,

@@ -87,119 +87,95 @@ export class UserPositionsService {
       const now = Date.now();
 
       if (this.poolAddressesCache && (now - this.poolAddressesCacheTime) < this.CACHE_DURATION) {
-        // Use cached pool addresses
         poolAddresses = this.poolAddressesCache;
       } else {
-        // Fetch fresh pool addresses
         poolAddresses = await this.lbServices.fetchPoolAddresses();
         this.poolAddressesCache = poolAddresses;
         this.poolAddressesCacheTime = now;
       }
 
-      // Limit to first 30 pools with Helius (higher rate limits)
-      const poolsToCheck = poolAddresses.slice(0, 30);
-
-      // Process pools in batches to optimize performance
-      const batchSize = 5; // Process 5 pools at a time with Helius
+      // DRASTICALLY reduce to 10 pools and process sequentially
+      const poolsToCheck = poolAddresses.slice(0, 10);
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      for (let i = 0; i < poolsToCheck.length; i += batchSize) {
-        const batch = poolsToCheck.slice(i, i + batchSize);
+      // Process ONE pool at a time to avoid rate limiting
+      for (let i = 0; i < poolsToCheck.length; i++) {
+        const poolAddress = poolsToCheck[i];
 
-        const positionPromises = batch.map(async (poolAddress) => {
-          try {
-            const pair = new PublicKey(poolAddress);
+        try {
+          const pair = new PublicKey(poolAddress);
 
-            // Get user positions for this pool
-            const positions = await this.lbServices.getUserPositions({
-              payer: userPubkey,
-              pair: pair,
-            });
+          // Get user positions for this pool
+          const positions = await this.lbServices.getUserPositions({
+            payer: userPubkey,
+            pair: pair,
+          });
 
-            if (!positions || positions.length === 0) {
-              return [];
+          if (!positions || positions.length === 0) {
+            // Wait before checking next pool
+            await delay(800);
+            continue;
+          }
+
+          // Fetch pool metadata
+          const poolMetadata = await this.lbServices.fetchPoolMetadata(poolAddress);
+          const tokenXSymbol = this.getTokenSymbol(poolMetadata.baseMint);
+          const tokenYSymbol = this.getTokenSymbol(poolMetadata.quoteMint);
+
+          // Process each position in this pool
+          for (const pos of positions) {
+            try {
+              const positionPubkey = new PublicKey(pos.publicKey);
+              const positionAccount = await this.lbServices.getPositionAccount(positionPubkey);
+
+              const totalXAmount = positionAccount.positionData?.totalXAmount || 0;
+              const totalYAmount = positionAccount.positionData?.totalYAmount || 0;
+
+              const tokenXAmount = Number(totalXAmount) / Math.pow(10, poolMetadata.extra.tokenBaseDecimal);
+              const tokenYAmount = Number(totalYAmount) / Math.pow(10, poolMetadata.extra.tokenQuoteDecimal);
+              const totalValueUSD = tokenXAmount + tokenYAmount;
+
+              const feeX = positionAccount.positionData?.feeX || 0;
+              const feeY = positionAccount.positionData?.feeY || 0;
+              const unclaimedFeesX = Number(feeX) / Math.pow(10, poolMetadata.extra.tokenBaseDecimal);
+              const unclaimedFeesY = Number(feeY) / Math.pow(10, poolMetadata.extra.tokenQuoteDecimal);
+
+              const volume24h = totalValueUSD * 0.15;
+              const fees24h = volume24h * (poolMetadata.tradeFee / 10000);
+              const currentAPY = totalValueUSD > 0 ? ((fees24h * 365) / totalValueUSD) * 100 : 0;
+              const estimatedDailyEarnings = (totalValueUSD * currentAPY / 100) / 365;
+
+              allPositions.push({
+                poolAddress,
+                positionMint: pos.publicKey?.toString() || '',
+                tokenX: poolMetadata.baseMint,
+                tokenY: poolMetadata.quoteMint,
+                tokenXSymbol,
+                tokenYSymbol,
+                tokenXAmount,
+                tokenYAmount,
+                totalValueUSD,
+                unclaimedFeesX,
+                unclaimedFeesY,
+                currentAPY,
+                estimatedDailyEarnings,
+                lowerBinId: positionAccount.lowerBinId || 0,
+                upperBinId: positionAccount.upperBinId || 0,
+              });
+
+              // Small delay between positions
+              await delay(200);
+            } catch (error) {
+              console.error(`Error processing position in pool ${poolAddress}:`, error);
             }
-
-            // Fetch pool metadata once for all positions in this pool
-            const poolMetadata = await this.lbServices.fetchPoolMetadata(poolAddress);
-
-            const tokenXSymbol = this.getTokenSymbol(poolMetadata.baseMint);
-            const tokenYSymbol = this.getTokenSymbol(poolMetadata.quoteMint);
-
-            // Process each position
-            const userPositions = await Promise.all(
-              positions.map(async (pos: any) => {
-                try {
-                  // Get position account data
-                  const positionPubkey = new PublicKey(pos.publicKey);
-                  const positionAccount = await this.lbServices.getPositionAccount(positionPubkey);
-
-                  // Calculate token amounts
-                  const totalXAmount = positionAccount.positionData?.totalXAmount || 0;
-                  const totalYAmount = positionAccount.positionData?.totalYAmount || 0;
-
-                  const tokenXAmount = Number(totalXAmount) / Math.pow(10, poolMetadata.extra.tokenBaseDecimal);
-                  const tokenYAmount = Number(totalYAmount) / Math.pow(10, poolMetadata.extra.tokenQuoteDecimal);
-
-                  // Estimate USD value (simplified)
-                  const totalValueUSD = tokenXAmount + tokenYAmount;
-
-                  // Calculate unclaimed fees
-                  const feeX = positionAccount.positionData?.feeX || 0;
-                  const feeY = positionAccount.positionData?.feeY || 0;
-                  const unclaimedFeesX = Number(feeX) / Math.pow(10, poolMetadata.extra.tokenBaseDecimal);
-                  const unclaimedFeesY = Number(feeY) / Math.pow(10, poolMetadata.extra.tokenQuoteDecimal);
-
-                  // Calculate APY based on pool's trading fee
-                  const volume24h = totalValueUSD * 0.15; // Estimate 15% daily volume
-                  const fees24h = volume24h * (poolMetadata.tradeFee / 10000);
-                  const currentAPY = totalValueUSD > 0 ? ((fees24h * 365) / totalValueUSD) * 100 : 0;
-                  const estimatedDailyEarnings = (totalValueUSD * currentAPY / 100) / 365;
-
-                  return {
-                    poolAddress,
-                    positionMint: pos.publicKey?.toString() || '',
-                    tokenX: poolMetadata.baseMint,
-                    tokenY: poolMetadata.quoteMint,
-                    tokenXSymbol,
-                    tokenYSymbol,
-                    tokenXAmount,
-                    tokenYAmount,
-                    totalValueUSD,
-                    unclaimedFeesX,
-                    unclaimedFeesY,
-                    currentAPY,
-                    estimatedDailyEarnings,
-                    lowerBinId: positionAccount.lowerBinId || 0,
-                    upperBinId: positionAccount.upperBinId || 0,
-                  };
-                } catch (error) {
-                  console.error(`Error processing position in pool ${poolAddress}:`, error);
-                  return null;
-                }
-              })
-            );
-
-            return userPositions.filter((p): p is UserDLMMPosition => p !== null);
-          } catch (error) {
-            // Pool doesn't have positions for this user, or error fetching
-            return [];
           }
-        });
-
-        // Wait for this batch to complete
-        const results = await Promise.allSettled(positionPromises);
-
-        // Flatten and filter results
-        for (const result of results) {
-          if (result.status === 'fulfilled' && result.value) {
-            allPositions.push(...result.value);
-          }
+        } catch (error) {
+          // Silently continue to next pool
         }
 
-        // Add small delay between batches for stability
-        if (i + batchSize < poolsToCheck.length) {
-          await delay(500); // Wait 500ms between batches with Helius
+        // Wait 1 second between each pool check
+        if (i < poolsToCheck.length - 1) {
+          await delay(1000);
         }
       }
 
@@ -232,7 +208,6 @@ export class UserPositionsService {
   ): Promise<OptimizationRecommendation[]> {
     const recommendations: OptimizationRecommendation[] = [];
 
-    // 1. Check for unclaimed rewards
     if (userPortfolio.totalUnclaimedRewards > 5) {
       recommendations.push({
         type: 'claim',
@@ -244,7 +219,6 @@ export class UserPositionsService {
       });
     }
 
-    // 2. Check for low APY positions
     const lowApyPositions = userPortfolio.dlmmPositions.filter(p => p.currentAPY < 10);
     if (lowApyPositions.length > 0 && marketData.length > 0) {
       const avgMarketAPY = marketData.reduce((sum, p) => sum + (p.apy || 0), 0) / marketData.length;
@@ -265,7 +239,6 @@ export class UserPositionsService {
       }
     }
 
-    // 3. Diversification check
     if (userPortfolio.positionCount === 1 && userPortfolio.totalValueUSD > 500) {
       recommendations.push({
         type: 'diversify',
@@ -277,7 +250,6 @@ export class UserPositionsService {
       });
     }
 
-    // 4. High concentration check
     const maxPositionValue = Math.max(...userPortfolio.dlmmPositions.map(p => p.totalValueUSD));
     const concentration = userPortfolio.totalValueUSD > 0
       ? (maxPositionValue / userPortfolio.totalValueUSD) * 100
@@ -294,7 +266,6 @@ export class UserPositionsService {
       });
     }
 
-    // 5. High APY opportunities
     if (marketData.length > 0 && userPortfolio.weightedAvgAPY > 0) {
       const highYieldPools = marketData
         .filter(p => p.apy > userPortfolio.weightedAvgAPY * 1.3)
@@ -338,7 +309,6 @@ export class UserPositionsService {
     const marketAvgAPY = marketData.reduce((sum, p) => sum + (p.apy || 0), 0) / marketData.length;
     const performanceVsMarket = userPortfolio.weightedAvgAPY - marketAvgAPY;
 
-    // Calculate percentile ranking
     const betterThan = performanceVsMarket > 0
       ? Math.min(95, 50 + (performanceVsMarket / marketAvgAPY) * 50)
       : Math.max(5, 50 - Math.abs(performanceVsMarket / marketAvgAPY) * 50);
